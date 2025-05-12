@@ -44,6 +44,56 @@ const impactTopicsOptions = [
   { id: "financial", name: "Financial Inclusion" }
 ];
 
+// Impact metrics by sector
+const sectorMetrics = {
+  "Education": [
+    { id: "students_reached", name: "Students Reached", unit: "people", sdgs: [4] },
+    { id: "graduation_rate", name: "Graduation Rate Improvement", unit: "%", sdgs: [4] },
+    { id: "teacher_training", name: "Teachers Trained", unit: "people", sdgs: [4] },
+    { id: "scholarships", name: "Scholarships Provided", unit: "count", sdgs: [4, 1] },
+    { id: "digital_access", name: "Digital Access Provided", unit: "people", sdgs: [4, 9] }
+  ],
+  "Healthcare": [
+    { id: "patients_treated", name: "Patients Treated", unit: "people", sdgs: [3] },
+    { id: "disease_reduction", name: "Disease Prevalence Reduction", unit: "%", sdgs: [3] },
+    { id: "healthcare_facilities", name: "Healthcare Facilities Built/Improved", unit: "count", sdgs: [3, 9] },
+    { id: "medical_professionals", name: "Medical Professionals Trained", unit: "people", sdgs: [3, 4] }
+  ],
+  "Clean Energy": [
+    { id: "renewable_capacity", name: "Renewable Energy Capacity Added", unit: "MW", sdgs: [7, 13] },
+    { id: "emissions_avoided", name: "CO2 Emissions Avoided", unit: "tons", sdgs: [7, 13] },
+    { id: "energy_access", name: "People Gaining Energy Access", unit: "people", sdgs: [7, 1] }
+  ],
+  "Water Management": [
+    { id: "clean_water_access", name: "People Gaining Clean Water Access", unit: "people", sdgs: [6] },
+    { id: "water_saved", name: "Water Saved/Purified", unit: "cubic meters", sdgs: [6, 12] }
+  ],
+  "Sustainable Agriculture": [
+    { id: "farmers_supported", name: "Farmers Supported", unit: "people", sdgs: [2, 1] },
+    { id: "land_restored", name: "Land Restored/Protected", unit: "hectares", sdgs: [2, 15] },
+    { id: "crop_yield_increase", name: "Crop Yield Increase", unit: "%", sdgs: [2, 12] }
+  ],
+  "Affordable Housing": [
+    { id: "housing_units", name: "Affordable Housing Units Created", unit: "count", sdgs: [11, 1] },
+    { id: "people_housed", name: "People Housed", unit: "people", sdgs: [11, 1] }
+  ],
+  "Financial Inclusion": [
+    { id: "microloans", name: "Microloans Provided", unit: "count", sdgs: [1, 8] },
+    { id: "financial_literacy", name: "People Receiving Financial Literacy Training", unit: "people", sdgs: [1, 4, 8] },
+    { id: "small_businesses", name: "Small Businesses Supported", unit: "count", sdgs: [8, 9] }
+  ]
+};
+
+// SDG-specific metrics
+const sdgMetrics = {
+  1: [{ id: "poverty_reduction", name: "People Lifted from Poverty", unit: "people" }],
+  2: [{ id: "food_security", name: "People with Improved Food Security", unit: "people" }],
+  3: [{ id: "mortality_reduction", name: "Mortality Rate Reduction", unit: "%" }],
+  4: [{ id: "education_quality", name: "Education Quality Improvement", unit: "%" }],
+  7: [{ id: "energy_efficiency", name: "Energy Efficiency Improvement", unit: "%" }],
+  13: [{ id: "climate_resilience", name: "Communities with Climate Resilience", unit: "count" }]
+};
+
 // Define interfaces for type safety
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface InvestorPreferences {
@@ -55,6 +105,12 @@ interface InvestorPreferences {
   riskTolerance: string;
   financialReturnExpectation: string;
   timeHorizon: string;
+}
+
+interface ImpactMetric {
+  id: string;
+  value: string;
+  unit: string;
 }
 
 interface Investment {
@@ -69,6 +125,7 @@ interface Investment {
   irisMetrics: string[];
   expectedReturn: string;
   risk: string;
+  impactMetrics?: ImpactMetric[];
 }
 
 export default function InvestmentManager() {
@@ -88,8 +145,54 @@ export default function InvestmentManager() {
     impactTopics: [] as string[],
     irisMetrics: [] as string[],
     expectedReturn: "",
-    risk: "medium"
+    risk: "medium",
+    impactMetrics: [] as ImpactMetric[]
   });
+  
+  // State to store the relevant metrics for the current form
+  const [relevantMetrics, setRelevantMetrics] = useState<Array<{id: string, name: string, unit: string}>>([]);
+  
+  // Update relevant metrics when sector or SDGs change
+  useEffect(() => {
+    const newRelevantMetrics: Array<{id: string, name: string, unit: string}> = [];
+    
+    // Add sector-specific metrics if sector matches
+    const sectorSpecificMetrics = Object.entries(sectorMetrics).find(
+      ([sector]) => formData.sector.toLowerCase().includes(sector.toLowerCase())
+    );
+    
+    if (sectorSpecificMetrics) {
+      sectorSpecificMetrics[1].forEach(metric => {
+        // Add if either no SDGs are specified for the metric, or if at least one SDG matches
+        if (!metric.sdgs || metric.sdgs.some(sdg => formData.sdgs.includes(sdg))) {
+          if (!newRelevantMetrics.some(m => m.id === metric.id)) {
+            newRelevantMetrics.push(metric);
+          }
+        }
+      });
+    }
+    
+    // Add SDG-specific metrics
+    formData.sdgs.forEach(sdgId => {
+      if (sdgMetrics[sdgId as keyof typeof sdgMetrics]) {
+        sdgMetrics[sdgId as keyof typeof sdgMetrics].forEach(metric => {
+          if (!newRelevantMetrics.some(m => m.id === metric.id)) {
+            newRelevantMetrics.push(metric);
+          }
+        });
+      }
+    });
+    
+    setRelevantMetrics(newRelevantMetrics);
+    
+    // Update formData.impactMetrics to contain all the new metrics (preserving existing values)
+    const updatedImpactMetrics = newRelevantMetrics.map(metric => {
+      const existing = formData.impactMetrics.find(m => m.id === metric.id);
+      return existing || { id: metric.id, value: "", unit: metric.unit };
+    });
+    
+    setFormData(prev => ({ ...prev, impactMetrics: updatedImpactMetrics }));
+  }, [formData.sector, formData.sdgs]);
 
   useEffect(() => {
     // Load user preferences and investments from localStorage
@@ -126,7 +229,10 @@ export default function InvestmentManager() {
   };
 
   const handleEditInvestment = (investment: Investment) => {
-    setFormData(investment);
+    setFormData({
+      ...investment,
+      impactMetrics: investment.impactMetrics || []
+    });
     setShowAddForm(true);
   };
 
@@ -157,7 +263,8 @@ export default function InvestmentManager() {
       impactTopics: [],
       irisMetrics: [],
       expectedReturn: "",
-      risk: "medium"
+      risk: "medium",
+      impactMetrics: []
     });
   };
 
@@ -179,6 +286,41 @@ export default function InvestmentManager() {
         return { ...prev, impactTopics: [...prev.impactTopics, topicId] };
       }
     });
+  };
+  
+  const updateImpactMetricValue = (metricId: string, value: string) => {
+    setFormData(prev => {
+      const updatedMetrics = prev.impactMetrics.map(metric => 
+        metric.id === metricId ? { ...metric, value } : metric
+      );
+      return { ...prev, impactMetrics: updatedMetrics };
+    });
+  };
+  
+  // Helper to format and display impact metrics in the card view
+  const displayImpactMetrics = (investment: Investment) => {
+    if (!investment.impactMetrics || investment.impactMetrics.length === 0) {
+      return <p className="text-sm text-muted-foreground">No impact metrics recorded</p>;
+    }
+    
+    return (
+      <div className="grid grid-cols-1 gap-1 mt-2">
+        {investment.impactMetrics
+          .filter(metric => metric.value)
+          .map(metric => {
+            const metricInfo = relevantMetrics.find(m => m.id === metric.id) || 
+              Object.values(sectorMetrics).flat().find(m => m.id === metric.id) ||
+              Object.values(sdgMetrics).flat().find(m => m.id === metric.id);
+            
+            return (
+              <div key={metric.id} className="flex justify-between">
+                <span className="text-sm">{metricInfo?.name || metric.id}:</span>
+                <span className="text-sm font-medium">{metric.value} {metric.unit}</span>
+              </div>
+            );
+          })}
+      </div>
+    );
   };
 
   return (
@@ -340,6 +482,44 @@ export default function InvestmentManager() {
                   ))}
                 </div>
               </div>
+              
+              {relevantMetrics.length > 0 && (
+                <div className="space-y-4 mt-6 pt-6 border-t">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-lg">Impact Metrics</Label>
+                    <span className="text-sm text-muted-foreground">
+                      Based on your selected sector and SDGs
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {relevantMetrics.map((metric) => {
+                      const impactMetric = formData.impactMetrics.find(m => m.id === metric.id);
+                      return (
+                        <div key={metric.id} className="space-y-2">
+                          <Label htmlFor={`metric-${metric.id}`} className="flex items-center">
+                            {metric.name} 
+                            <span className="text-xs text-muted-foreground ml-2">
+                              ({metric.unit})
+                            </span>
+                          </Label>
+                          <div className="flex items-center">
+                            <Input
+                              id={`metric-${metric.id}`}
+                              type="text"
+                              placeholder={`Enter value in ${metric.unit}`}
+                              value={impactMetric?.value || ""}
+                              onChange={(e) => updateImpactMetricValue(metric.id, e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    These metrics will help track and report the actual impact of your investment.
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex justify-end gap-2 border-t p-4">
@@ -431,6 +611,15 @@ export default function InvestmentManager() {
                           ) : null;
                         })}
                       </div>
+                      
+                      {investment.impactMetrics && investment.impactMetrics.length > 0 && (
+                        <div className="mt-4">
+                          <h4 className="text-sm font-medium mb-2">Impact Metrics</h4>
+                          <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-3">
+                            {displayImpactMetrics(investment)}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     
                     <div className="bg-gray-50 dark:bg-gray-900 p-6 md:w-64">

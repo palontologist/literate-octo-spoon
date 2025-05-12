@@ -11,70 +11,6 @@ import { ChartConfig, ChartContainer } from '@/components/ui/chart';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, XAxis, YAxis } from "recharts";
 import { Badge } from "@/components/ui/badge";
 
-// Mock portfolio data
-const portfolioCompanies = [
-  { 
-    id: 1, 
-    name: "EcoTech Solutions",
-    sector: "Clean Energy",
-    investment: 2500000,
-    currentValue: 3100000,
-    roi: 24,
-    annualReturn: 7.8,
-    volatility: 15.2,
-    esgScore: 79,
-    trend: 5.2
-  },
-  { 
-    id: 2, 
-    name: "AquaPure Systems",
-    sector: "Water Management",
-    investment: 1800000,
-    currentValue: 2250000,
-    roi: 25,
-    annualReturn: 8.2,
-    volatility: 12.5,
-    esgScore: 69,
-    trend: 3.1
-  },
-  { 
-    id: 3, 
-    name: "GreenBuild Inc.",
-    sector: "Sustainable Construction",
-    investment: 3200000,
-    currentValue: 2880000,
-    roi: -10,
-    annualReturn: -3.5,
-    volatility: 18.7,
-    esgScore: 65,
-    trend: -2.3
-  },
-  { 
-    id: 4, 
-    name: "SolarTech Industries",
-    sector: "Clean Energy",
-    investment: 4100000,
-    currentValue: 5330000,
-    roi: 30,
-    annualReturn: 9.4,
-    volatility: 17.8,
-    esgScore: 82,
-    trend: 7.8
-  },
-  { 
-    id: 5, 
-    name: "EcoHarvest Agriculture",
-    sector: "Sustainable Agriculture",
-    investment: 1950000,
-    currentValue: 2150000,
-    roi: 10.2,
-    annualReturn: 3.4,
-    volatility: 14.2,
-    esgScore: 67,
-    trend: 1.4
-  }
-];
-
 // Historical financial data for charts
 const financialTrendData = [
   { month: 'Jan', value: 12800000, return: 5.2, risk: 15.4 },
@@ -114,32 +50,146 @@ export default function InvestorDashboard() {
     financialReturnExpectation: string;
     timeHorizon: string;
   } | null>(null);
+  
+  interface PortfolioCompany {
+    id: number;
+    name: string;
+    sector: string;
+    investment: number;
+    currentValue: number;
+    roi: number;
+    annualReturn: number;
+    volatility: number;
+    esgScore: number;
+    trend: string | number;
+    sdgs: number[];
+    impactTopics: string[];
+    impactMetrics?: Array<{id: string, value: string, unit: string}>;
+  }
+  
+  const [portfolioCompanies, setPortfolioCompanies] = useState<PortfolioCompany[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load user preferences from localStorage
+    // Load user preferences and investments from localStorage
     const savedPreferences = localStorage.getItem('investorPreferences');
+    const savedInvestments = localStorage.getItem('investorInvestments');
+    
     if (savedPreferences) {
       setUserPreferences(JSON.parse(savedPreferences));
     } else {
       // If no preferences found, redirect to setup page
       router.push('/dashboards/investor/setup');
     }
+    
+    if (savedInvestments) {
+      const investments = JSON.parse(savedInvestments);
+      
+      // Transform investments to match the portfolioCompanies structure
+      const transformedInvestments = investments.map((investment: {
+        id: number;
+        companyName: string;
+        sector: string;
+        investmentAmount: string;
+        expectedReturn: string;
+        risk: string;
+        sdgs: number[];
+        impactTopics: string[];
+        impactMetrics?: Array<{id: string, value: string, unit: string}>;
+      }) => {
+        // Convert string values to numbers safely
+        const investmentAmount = parseFloat(investment.investmentAmount) || 0;
+        const expectedReturn = parseFloat(investment.expectedReturn) || 0;
+        
+        return {
+          id: investment.id,
+          name: investment.companyName,
+          sector: investment.sector,
+          investment: investmentAmount,
+          currentValue: calculateCurrentValue(investmentAmount, expectedReturn),
+          roi: expectedReturn,
+          annualReturn: expectedReturn / 2, // Simplified for demo
+          volatility: investment.risk === 'high' ? 20 : investment.risk === 'medium' ? 15 : 10,
+          esgScore: 65 + Math.floor(Math.random() * 20), // Random ESG score between 65-85
+          trend: (Math.random() * 10 - 3).toFixed(1), // Random trend between -3 and +7
+          sdgs: investment.sdgs || [],
+          impactTopics: investment.impactTopics || [],
+          impactMetrics: investment.impactMetrics || []
+        };
+      });
+      
+      setPortfolioCompanies(transformedInvestments);
+    }
+    
+    setIsLoading(false);
   }, [router]);
+  
+  // Helper function to calculate current value based on investment amount and return
+  const calculateCurrentValue = (investment: number, expectedReturn: number) => {
+    return investment * (1 + (expectedReturn / 100));
+  };
+
+  // Calculate total impact metrics across all investments
+  const calculateImpactTotals = () => {
+    const totals: Record<string, {value: number, unit: string}> = {};
+    
+    portfolioCompanies.forEach(company => {
+      if (company.impactMetrics) {
+        company.impactMetrics.forEach(metric => {
+          if (metric.value) {
+            const numericValue = parseFloat(metric.value);
+            if (!isNaN(numericValue)) {
+              if (!totals[metric.id]) {
+                totals[metric.id] = { value: 0, unit: metric.unit };
+              }
+              totals[metric.id].value += numericValue;
+            }
+          }
+        });
+      }
+    });
+    
+    return totals;
+  };
+  
+  const impactTotals = calculateImpactTotals();
+  
+  // Helper function to get metric name
+  const getMetricName = (metricId: string) => {
+    // This utility function helps display the user-friendly name for a metric ID
+    const allMetrics = [
+      { id: "students_reached", name: "Students Reached" },
+      { id: "patients_treated", name: "Patients Treated" },
+      { id: "renewable_capacity", name: "Renewable Energy Capacity" },
+      { id: "emissions_avoided", name: "CO2 Emissions Avoided" },
+      { id: "housing_units", name: "Housing Units Created" },
+      { id: "people_housed", name: "People Housed" },
+      { id: "clean_water_access", name: "Clean Water Access" },
+      { id: "farmers_supported", name: "Farmers Supported" },
+      { id: "poverty_reduction", name: "People Lifted from Poverty" },
+      { id: "financial_literacy", name: "Financial Literacy" }
+    ];
+    
+    const metric = allMetrics.find(m => m.id === metricId);
+    return metric ? metric.name : metricId;
+  };
 
   const filteredCompanies = portfolioCompanies.filter(company => {
     const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          company.sector.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "all" || company.sector.toLowerCase().includes(selectedCategory.toLowerCase());
-    return matchesSearch && matchesCategory;
+    const matchesSDGs = userPreferences && userPreferences.selectedSDGs.length > 0 ? 
+                      company.sdgs.some((sdg: number) => userPreferences.selectedSDGs.includes(sdg)) : true;
+    const matchesTopics = userPreferences && userPreferences.selectedTopics.length > 0 ? 
+                      company.impactTopics.some((topic: string) => userPreferences.selectedTopics.includes(topic)) : true;
+    return matchesSearch && matchesCategory && matchesSDGs && matchesTopics;
   });
 
   const totalInvestment = portfolioCompanies.reduce((sum, company) => sum + company.investment, 0);
   const totalCurrentValue = portfolioCompanies.reduce((sum, company) => sum + company.currentValue, 0);
-  const totalROI = ((totalCurrentValue - totalInvestment) / totalInvestment) * 100;
-  const weightedReturn = portfolioCompanies.reduce(
-    (sum, company) => sum + (company.annualReturn * company.currentValue), 
-    0
-  ) / totalCurrentValue;
+  const totalROI = totalInvestment > 0 ? ((totalCurrentValue - totalInvestment) / totalInvestment) * 100 : 0;
+  const weightedReturn = totalCurrentValue > 0 ? 
+    portfolioCompanies.reduce((sum, company) => sum + (company.annualReturn * company.currentValue), 0) / totalCurrentValue : 0;
 
   const sectorDistribution = portfolioCompanies.reduce((acc, company) => {
     if (!acc[company.sector]) {
@@ -152,8 +202,55 @@ export default function InvestorDashboard() {
   const sectorChartData = Object.entries(sectorDistribution).map(([sector, amount]) => ({
     sector,
     amount,
-    percentage: Math.round((amount / totalInvestment) * 100)
+    percentage: totalInvestment > 0 ? Math.round((amount / totalInvestment) * 100) : 0
   }));
+
+  if (isLoading) {
+    return <div className="p-8 text-center">Loading your investment portfolio...</div>;
+  }
+
+  if (portfolioCompanies.length === 0) {
+    return (
+      <div className="p-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Investment Portfolio</h1>
+            <p className="text-muted-foreground">
+              {userPreferences ? 
+                `Welcome, ${userPreferences.investorName}` :
+                'Your impact investment portfolio'
+              }
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => router.push("/dashboards/investor/investments")}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Investments
+            </Button>
+            <Button variant="outline" onClick={() => router.push("/dashboards")}>
+              Dashboard Selection
+            </Button>
+          </div>
+        </div>
+        
+        <Card className="p-8 text-center">
+          <h2 className="text-xl font-semibold mb-2">No investments found</h2>
+          <p className="text-muted-foreground mb-6">Start building your impact portfolio by adding your first investment</p>
+          <Button 
+            onClick={() => router.push("/dashboards/investor/investments")}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Your First Investment
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -205,10 +302,10 @@ export default function InvestorDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${(totalCurrentValue / 1000000).toFixed(2)}M</div>
+            <div className="text-2xl font-bold">${(totalCurrentValue / 1000).toFixed(2)}K</div>
             <div className="flex items-center text-xs text-muted-foreground">
               <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
-              +${((totalCurrentValue - totalInvestment) / 1000000).toFixed(2)}M from initial investment
+              +${((totalCurrentValue - totalInvestment) / 1000).toFixed(2)}K from initial investment
             </div>
           </CardContent>
         </Card>
@@ -249,6 +346,30 @@ export default function InvestorDashboard() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Impact Metrics Summary */}
+      {Object.keys(impactTotals).length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Portfolio Impact Metrics</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Object.entries(impactTotals).map(([metricId, data]) => (
+              <Card key={metricId}>
+                <CardContent className="pt-6">
+                  <div className="text-sm font-medium text-muted-foreground mb-1">
+                    {getMetricName(metricId)}
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {data.value.toLocaleString()} <span className="text-sm">{data.unit}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">
+            These metrics represent the combined impact across your investments.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <Card>
@@ -353,6 +474,7 @@ export default function InvestorDashboard() {
                   <th className="text-right py-2">Annual Return</th>
                   <th className="text-right py-2">Volatility</th>
                   <th className="text-right py-2">ESG Score</th>
+                  <th className="text-right py-2">Impact</th>
                 </tr>
               </thead>
               <tbody>
@@ -360,8 +482,8 @@ export default function InvestorDashboard() {
                   <tr key={company.id} className="border-t hover:bg-muted/30">
                     <td className="py-3">{company.name}</td>
                     <td className="py-3">{company.sector}</td>
-                    <td className="text-right py-3">${(company.investment / 1000000).toFixed(2)}M</td>
-                    <td className="text-right py-3">${(company.currentValue / 1000000).toFixed(2)}M</td>
+                    <td className="text-right py-3">${(company.investment / 1000).toFixed(2)}K</td>
+                    <td className="text-right py-3">${(company.currentValue / 1000).toFixed(2)}K</td>
                     <td className="text-right py-3">
                       <div className="flex items-center justify-end gap-1">
                         <span className="font-medium">{company.roi}%</span>
@@ -379,6 +501,29 @@ export default function InvestorDashboard() {
                     </td>
                     <td className="text-right py-3">{company.volatility}%</td>
                     <td className="text-right py-3">{company.esgScore}/100</td>
+                    <td className="text-right py-3">
+                      {company.impactMetrics && company.impactMetrics.length > 0 ? (
+                        <div className="flex justify-end">
+                          <Badge variant="outline" className="cursor-pointer hover:bg-secondary group relative">
+                            {company.impactMetrics.filter(m => m.value).length} metrics
+                            <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-popover rounded-md shadow-md border z-50 hidden group-hover:block">
+                              <h4 className="text-sm font-medium mb-1">Impact Metrics</h4>
+                              {company.impactMetrics
+                                .filter(metric => metric.value)
+                                .map(metric => (
+                                  <div key={metric.id} className="flex justify-between text-xs py-1">
+                                    <span>{getMetricName(metric.id)}:</span>
+                                    <span className="font-medium">{metric.value} {metric.unit}</span>
+                                  </div>
+                                ))
+                              }
+                            </div>
+                          </Badge>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">None</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
