@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart3, Leaf, TrendingUp, Users } from "lucide-react";
+import { ArrowRight, BarChart3, Leaf, TrendingUp, Users, Sun, ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function DashboardSelection() {
@@ -130,8 +130,56 @@ export default function DashboardSelection() {
           </Card>
         </div>
         
-        {/* Individual Dashboard Link */}
-        <div className="mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+          {/* Sustainability Metrics Dashboard */}
+          <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+            <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-700 text-white">
+              <CardTitle className="flex items-center gap-2">
+                <Sun className="h-5 w-5" />
+                Sustainability Metrics
+              </CardTitle>
+              <CardDescription className="text-white/80">
+                Track metrics for solar energy and sustainable fashion
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-amber-100 dark:bg-amber-900/20 p-2">
+                    <Sun className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Solar Energy Metrics</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Track production capacity, CO2 reduction, and resource efficiency
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-amber-100 dark:bg-amber-900/20 p-2">
+                    <ShoppingBag className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Sustainable Fashion</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Monitor recycled materials usage, water savings, and ethical scores
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="bg-gray-50 dark:bg-gray-900 px-6 py-4">
+              <Button 
+                className="w-full bg-amber-600 hover:bg-amber-700"
+                onClick={() => router.push("/dashboards/impact/sustainability")}
+              >
+                Access Sustainability Metrics
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardFooter>
+          </Card>
+          
+          {/* Individual Dashboard Link */}
           <Card className="overflow-hidden hover:shadow-lg transition-shadow">
             <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-700 text-white">
               <CardTitle className="flex items-center gap-2">

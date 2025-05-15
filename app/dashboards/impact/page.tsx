@@ -137,6 +137,9 @@ export default function ImpactDashboard() {
           <p className="text-muted-foreground">Track ESG impact across your investments</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push("/dashboards/impact/sustainability")}>
+            Sustainability Metrics
+          </Button>
           <Button variant="outline" onClick={() => router.push("/dashboards")}>
             Dashboard Selection
           </Button>
