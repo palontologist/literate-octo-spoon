@@ -1,104 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Leaf, ArrowUp, Target, Globe, Users } from "lucide-react";
-
-/**
- * SustainabilityClock component shows a visual countdown that represents
- * the urgency of sustainable action in the fashion industry
- */
-export function SustainabilityClock() {
-  const [time, setTime] = useState<Date>(new Date());
-  const [years, setYears] = useState(7);
-  const [months, setMonths] = useState(5);
-  const [days, setDays] = useState(18);
-  
-  // Update the clock every second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
-    
-    return () => {
-      clearInterval(timer);
-    };
-  }, []);
-  
-  // Format time display
-  const hours = time.getHours().toString().padStart(2, '0');
-  const minutes = time.getMinutes().toString().padStart(2, '0');
-  const seconds = time.getSeconds().toString().padStart(2, '0');
-  
-  // Calculate progress/urgency (just a visual representation)
-  const timeUrgency = 100 - Math.floor((years / 10) * 100);
-  
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-amber-500" />
-          Sustainability Clock
-        </CardTitle>
-        <CardDescription>Time left for fashion industry's sustainability transformation</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="text-center p-4 bg-gradient-to-b from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20 rounded-lg">
-            <div className="text-4xl font-bold text-amber-800 dark:text-amber-300 mb-1 font-mono">
-              {hours}:{minutes}:{seconds}
-            </div>
-            <div className="text-sm text-amber-700 dark:text-amber-400">
-              Current Time
-            </div>
-          </div>
-          
-          <div className="text-center p-4 bg-gradient-to-b from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/20 rounded-lg">
-            <div className="text-4xl font-bold text-red-800 dark:text-red-300 mb-1 flex items-center justify-center">
-              <span>{years}</span>
-              <span className="text-lg mx-1 text-red-700 dark:text-red-400">y</span>
-              <span>{months}</span>
-              <span className="text-lg mx-1 text-red-700 dark:text-red-400">m</span>
-              <span>{days}</span>
-              <span className="text-lg ml-1 text-red-700 dark:text-red-400">d</span>
-            </div>
-            <div className="text-sm text-red-700 dark:text-red-400">
-              Countdown to 2030 Goals
-            </div>
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-muted-foreground">Urgency Level</span>
-              <span className="font-medium text-amber-600">{timeUrgency}%</span>
-            </div>
-            <Progress value={timeUrgency} className="h-2" />
-          </div>
-          
-          <div className="pt-4 flex flex-col gap-2 text-sm">
-            <div className="flex items-start gap-2">
-              <Target className="h-4 w-4 text-amber-500 mt-0.5" />
-              <div>
-                <span className="font-medium">2030 Industry Goal:</span> 45% reduction in carbon emissions
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <Leaf className="h-4 w-4 text-green-500 mt-0.5" />
-              <div>
-                <span className="font-medium">Current Progress:</span> 12% reduction achieved
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+import { ArrowUp, Target, Globe } from "lucide-react";
 
 // SDG metrics data
 const SDG_DATA = [
@@ -169,9 +75,6 @@ const SDG_DATA = [
  */
 export function SDGMetrics() {
   const [activeTab, setActiveTab] = useState(SDG_DATA[0].id);
-  
-  // Find the active SDG data
-  const activeSDG = SDG_DATA.find(sdg => sdg.id === activeTab) || SDG_DATA[0];
   
   // Color mapping
   const colorMap: Record<string, string> = {
@@ -252,15 +155,10 @@ export function SDGMetrics() {
                 </div>
               </div>
               
-              <div className="border-t pt-3 mt-4">
-                <div className="flex items-start gap-2">
-                  <Users className="h-4 w-4 text-blue-500 mt-0.5" />
-                  <div className="text-sm">
-                    <span className="font-medium">Industry Average:</span> {sdg.progress - 8}%
-                    <span className="text-green-600 ml-2">
-                      (+8% above industry)
-                    </span>
-                  </div>
+              <div className="pt-3 flex items-start gap-2 text-sm">
+                <Target className="h-4 w-4 text-blue-500 mt-0.5" />
+                <div>
+                  <span className="font-medium">2030 Target:</span> {sdg.progress * 2}% overall contribution to {sdg.name.split(":")[1].trim()}
                 </div>
               </div>
             </TabsContent>

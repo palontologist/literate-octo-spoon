@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -15,8 +15,7 @@ import {
   ArrowRight, 
   Check, 
   Truck, 
-  Factory, 
-  Building2, 
+  Factory,
   Info, 
   AlertCircle, 
   LineChart, 
@@ -27,9 +26,7 @@ import {
   Upload,
   Link2,
   Users,
-  BarChart,
-  ToggleLeft,
-  ToggleRight
+  BarChart
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -1193,7 +1190,7 @@ export default function SustainableFashionOnboarding() {
                   </Label>
                 </div>
                 <p className="text-xs text-muted-foreground ml-7 mb-4">
-                  Connect to your shipping provider's API to automatically calculate and report emissions per shipment
+                  Connect to your shipping provider&apos;s API to automatically calculate and report emissions per shipment
                 </p>
               </div>
             </div>
@@ -1204,7 +1201,7 @@ export default function SustainableFashionOnboarding() {
                 <div>
                   <h4 className="font-medium text-green-800 dark:text-green-300">Customer Emissions Information</h4>
                   <p className="text-sm text-green-700 dark:text-green-400">
-                    Based on your provided data, we'll automatically calculate and display the emissions saved
+                    Based on your provided data, we&apos;ll automatically calculate and display the emissions saved
                     when customers purchase your products compared to conventional alternatives.
                   </p>
                 </div>

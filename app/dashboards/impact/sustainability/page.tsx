@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -171,6 +171,14 @@ const marketInsightData = {
 };
 
 export default function SustainabilityDashboard() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading dashboard...</div>}>
+      <SustainabilityDashboardContent />
+    </Suspense>
+  );
+}
+
+function SustainabilityDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
